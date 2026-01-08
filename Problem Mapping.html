@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem Mapping Interactive</title>
+    <!-- Tailwind CSS dari CDN memastikan tampilan tetap terjaga saat dibuka secara lokal -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .map-node { transition: all 0.3s ease; }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-700">Problem Mapping Lab</h1>
+            <p class="text-gray-600 mt-2">Identifikasi masalah, temukan akar penyebabnya, dan rancang solusinya.</p>
+        </header>
+
+        <!-- Area Masalah dari AI -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6 border-l-4 border-indigo-500">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Skenario Masalah</h2>
+                <div class="flex gap-2">
+                    <button id="generateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                        <span id="btnText">Dapatkan Masalah Baru</span>
+                        <div id="loader" class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+            <div id="problemDisplay" class="text-gray-700 italic bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300">
+                Klik tombol di atas untuk memunculkan tantangan masalah yang harus kamu pecahkan. (Memerlukan koneksi internet)
+            </div>
+        </div>
+
+        <!-- Dashboard Pemetaan -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Form Input -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">Identifikasi Kamu</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Akar Masalah (Kenapa ini terjadi?)</label>
+                        <textarea id="inputCause" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" rows="2" placeholder="Contoh: Kurangnya kesadaran masyarakat..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Dampak (Apa yang akan terjadi?)</label>
+                        <textarea id="inputImpact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" rows="2" placeholder="Contoh: Lingkungan menjadi kotor..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Solusi (Bagaimana mengatasinya?)</label>
+                        <textarea id="inputSolution" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border" rows="2" placeholder="Contoh: Mengadakan kerja bakti rutin..."></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="updateMapBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                            Update Peta Konsep
+                        </button>
+                        <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Map -->
+            <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center space-y-4">
+                <h3 class="text-lg font-semibold text-gray-800 w-full text-left">Peta Masalah</h3>
+                
+                <!-- Root Cause Node -->
+                <div id="displayCause" class="map-node w-full p-3 bg-red-100 border border-red-200 rounded-lg text-center text-sm text-red-800 font-medium">
+                    Akar Masalah
+                </div>
+                
+                <div class="h-6 w-0.5 bg-gray-300"></div>
+
+                <!-- Problem Node (Middle) -->
+                <div id="displayTitle" class="w-full p-4 bg-indigo-600 rounded-xl text-center text-white font-bold shadow-lg">
+                    MASALAH UTAMA
+                </div>
+
+                <div class="flex w-full gap-2">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="h-6 w-0.5 bg-gray-300"></div>
+                        <div id="displayImpact" class="map-node w-full p-3 bg-orange-100 border border-orange-200 rounded-lg text-center text-sm text-orange-800 font-medium">
+                            Dampak
+                        </div>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="h-6 w-0.5 bg-gray-300"></div>
+                        <div id="displaySolution" class="map-node w-full p-3 bg-green-100 border border-green-200 rounded-lg text-center text-sm text-green-800 font-medium">
+                            Solusi
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>&copy; 2024 - Problem Mapping Education Tool</p>
+            <p class="mt-1 text-xs">Aplikasi ini memerlukan koneksi internet untuk mengambil skenario dari AI.</p>
+        </footer>
+    </div>
+
+    <script>
+        // API Key akan diisi secara otomatis oleh lingkungan eksekusi
+        const apiKey = ""; 
+        const generateBtn = document.getElementById('generateBtn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btnText');
+        const problemDisplay = document.getElementById('problemDisplay');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // State Management
+        let currentProblem = "";
+
+        // Fungsi fetch masalah menggunakan AI (Tetap berfungsi di local selama ada internet)
+        async function fetchNewProblem() {
+            setLoading(true);
+            const systemPrompt = "Kamu adalah guru yang memberikan studi kasus masalah nyata kepada siswa. Berikan satu paragraf singkat (maksimal 3 kalimat) tentang sebuah masalah yang perlu dipecahkan. Gunakan Bahasa Indonesia. Sertakan judul singkat di awal (Contoh: Polusi Udara | Masalah polusi...)";
+            const userQuery = "Berikan satu masalah baru.";
+
+            try {
+                let retries = 0;
+                const maxRetries = 5;
+                let response;
+
+                while (retries < maxRetries) {
+                    try {
+                        // Memanggil API eksternal (Internet diperlukan)
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: userQuery }] }],
+                                systemInstruction: { parts: [{ text: systemPrompt }] }
+                            })
+                        });
+                        if (response.ok) break;
+                    } catch (e) {
+                        retries++;
+                        // Exponential backoff
+                        await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                    }
+                }
+
+                if (!response || !response.ok) throw new Error('Gagal terhubung ke AI.');
+
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (text) {
+                    if (text.includes('|')) {
+                        const splitText = text.split('|');
+                        document.getElementById('displayTitle').innerText = splitText[0].trim().toUpperCase();
+                        currentProblem = splitText[1].trim();
+                    } else {
+                        currentProblem = text.trim();
+                    }
+                    problemDisplay.innerText = currentProblem;
+                    saveToLocal(); // Simpan skenario ke local storage
+                }
+
+            } catch (error) {
+                console.error(error);
+                problemDisplay.innerText = "Koneksi Gagal. Pastikan Anda terhubung ke internet untuk mengambil masalah baru.";
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loader.classList.remove('hidden');
+                btnText.innerText = "Menghubungkan AI...";
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-50');
+            } else {
+                loader.classList.add('hidden');
+                btnText.innerText = "Dapatkan Masalah Baru";
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-50');
+            }
+        }
+
+        // Fungsi menyimpan ke Local Storage agar data tidak hilang saat offline/refresh
+        function saveToLocal() {
+            const data = {
+                problem: problemDisplay.innerText,
+                title: document.getElementById('displayTitle').innerText,
+                cause: document.getElementById('inputCause').value,
+                impact: document.getElementById('inputImpact').value,
+                solution: document.getElementById('inputSolution').value
+            };
+            localStorage.setItem('problemMappingData', JSON.stringify(data));
+        }
+
+        // Memuat data dari Local Storage
+        function loadFromLocal() {
+            const saved = localStorage.getItem('problemMappingData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                problemDisplay.innerText = data.problem;
+                document.getElementById('displayTitle').innerText = data.title;
+                document.getElementById('inputCause').value = data.cause;
+                document.getElementById('inputImpact').value = data.impact;
+                document.getElementById('inputSolution').value = data.solution;
+                updateMapDisplay();
+            }
+        }
+
+        function updateMapDisplay() {
+            const cause = document.getElementById('inputCause').value;
+            const impact = document.getElementById('inputImpact').value;
+            const solution = document.getElementById('inputSolution').value;
+
+            if (cause) document.getElementById('displayCause').innerText = cause;
+            if (impact) document.getElementById('displayImpact').innerText = impact;
+            if (solution) document.getElementById('displaySolution').innerText = solution;
+        }
+
+        document.getElementById('updateMapBtn').addEventListener('click', () => {
+            updateMapDisplay();
+            saveToLocal();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            localStorage.removeItem('problemMappingData');
+            location.reload();
+        });
+
+        generateBtn.addEventListener('click', fetchNewProblem);
+
+        // Load data saat pertama kali dibuka
+        window.onload = loadFromLocal;
+    </script>
+</body>
+</html>
